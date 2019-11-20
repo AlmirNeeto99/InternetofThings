@@ -1,54 +1,90 @@
 <html lang="pt-br">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta charset="utf-8">
-    <head>
-        <link rel="icon" href="img/iot.png" type="image/png">
-        <title>Internet of Things</title>
-    </head>
-    <style>
-        *{
-            box-sizing: border-box;
-        }
-        body{
-            background: linear-gradient(45deg, #50bece, #03a9f4ad, #0099d4);
-        }
-        header, footer{
-            text-align: center;
-        }
-        .container{
-            display: flex;
-            width: 100%;
-            height: 100%;
-            justify-content: space-evenly;
-            align-items: center;
-        }
-        .button_item{
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-width: 30%;
-            min-height: 70%;
-            border-radius: 5px;
-            color: white;
-            border: 1px solid #dedee8;
-            font-size: 30px;
-            transition: all .5s;
-        }
-        .button_item:hover{
-            transform: scale(1.2);
-            border-color: #000000ad;
-            background-color: #ffffffc4;
-            color: #51c0d9;
-        }
-    </style>
-    <body>
-        <header>Internet of Things</header>
-        <main>
-            <div class="container">
-                <div class="button_item">Actuator</div>
-                <div class="button_item">Sensor</div>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+
+<head>
+    <link rel="icon" href="img/iot.png" type="image/png">
+    <title>Internet of Things</title>
+</head>
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        background: linear-gradient(45deg, #50bece, #03a9f4ad, #0099d4);
+    }
+
+    header,
+    footer {
+        text-align: center;
+    }
+
+    .container {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        justify-content: space-evenly;
+        align-items: center;
+    }
+
+    .button_item {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        min-width: 30%;
+        max-width: 30%;
+        min-height: 70%;
+        border-radius: 5px;
+        color: white;
+        border: 1px solid #dedee8;
+        font-size: 30px;
+        transition: all .5s;
+    }
+
+    .button_item:hover {
+        transform: scale(1.2);
+        border-color: #000000ad;
+        background-color: #ffffffc4;
+        color: #51c0d9;
+        cursor: pointer;
+    }
+
+    .button_item h2 {
+        color: #404a50;
+        margin: 5px;
+    }
+
+    .item_paragraph {
+        text-align: center;
+        padding: 15px;
+        margin: 5px;
+    }
+</style>
+
+<body>
+    <header>Internet of Things</header>
+    <main>
+        <div class="container">
+            <div class="button_item" onclick="window.location.replace('actuator')">
+                <img src="img/actuator.png" width="50" height="50">
+                <h2>Actuator</h2>
+                <p class="item_paragraph">Actuator is the device that reads a data from server and
+                    takes an action based on it.
+                </p>
             </div>
-        </main>
-        <footer>Developed by Almir Neto &copy;</footer>
-    </body>
+            <div class="button_item" onclick="window.location.replace('sensor')">
+                <img src="img/sensor.png" width="50" height="50">
+                <h2>Sensor</h2>
+                <p class="item_paragraph">Sensor is the device responsable for collecting data from the enviroment and
+                    publishing its data
+                    to the server.
+                </p>
+            </div>
+        </div>
+    </main>
+    <footer>Developed by Almir Neto &copy;</footer>
+</body>
+
 </html>
