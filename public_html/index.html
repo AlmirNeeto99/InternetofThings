@@ -9,10 +9,12 @@
 <style>
     * {
         box-sizing: border-box;
+        font-family: 'Courier New', Courier, monospace;
     }
 
-    body {
-        background: linear-gradient(45deg, #50bece, #03a9f4ad, #0099d4);
+    body,
+    html {
+        margin: 0;
     }
 
     header,
@@ -61,29 +63,116 @@
         padding: 15px;
         margin: 5px;
     }
+
+    main {
+        font-size: 20px;
+        height: 100vh;
+        width: 100vw;
+        max-width: 100%;
+        position: relative;
+        background-image: url('img/back.svg');
+        background-size: cover;
+        color: white;
+    }
+
+    main h2 {
+        position: absolute;
+        right: 20%;
+    }
+
+    main p,
+    ul {
+        display: inline-block;
+        position: absolute;
+    }
+
+    main #definition_head,
+    #list_header,
+    ul {
+        opacity: 0;
+    }
+
+    main #definition_head {
+        top: 10%;
+        right: 10%;
+        max-width: 40%;
+        animation: appear_left 1s linear forwards;
+    }
+
+    #image_container {
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        background: linear-gradient(45deg, #4fc1c5, #3de8ba82);
+    }
+
+    main #list_header {
+        top: 45%;
+        right: 30%;
+        animation: appear_right 1s linear 1s forwards;
+    }
+
+    main ul {
+        bottom: 5%;
+        left: 10%;
+        animation: appear_left 1s linear 2s forwards;
+    }
+
+    @keyframes appear_left {
+        from {
+            transform: translateX(-150px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes appear_right {
+        from {
+            transform: translateX(150px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
 </style>
 
 <body>
-    <header>Internet of Things</header>
     <main>
-        <div class="container">
-            <div class="button_item" onclick="window.location.replace('actuator')">
-                <img src="img/actuator.png" width="50" height="50">
-                <h2>Actuator</h2>
-                <p class="item_paragraph">Actuator is the device that reads a data from server and
-                    takes an action based on it.
-                </p>
-            </div>
-            <div class="button_item" onclick="window.location.replace('sensor')">
-                <img src="img/sensor.png" width="50" height="50">
-                <h2>Sensor</h2>
-                <p class="item_paragraph">Sensor is the device responsable for collecting data from the enviroment and
-                    publishing its data
-                    to the server.
-                </p>
-            </div>
-        </div>
+        <div id="image_container"></div>
+        <h2>Internet of Things</h2>
+        <p id="definition_head">With this application you can check and control all you devices present in your network.
+        </p>
+        <p id="list_header">Here you will be able to check: </p>
+        <ul id="example_list">
+            <li>What sensor are publishing into the network.</li>
+            <li>What actuator are reading from sensors.</li>
+        </ul>
     </main>
+    <div class="container">
+        <div class="button_item" onclick="window.location.replace('actuator')">
+            <img src="img/actuator.png" width="50" height="50">
+            <h2>Actuator</h2>
+            <p class="item_paragraph">Actuator is the device that reads a data from server and
+                takes an action based on it.
+            </p>
+        </div>
+        <div class="button_item" onclick="window.location.replace('sensor')">
+            <img src="img/sensor.png" width="50" height="50">
+            <h2>Sensor</h2>
+            <p class="item_paragraph">Sensor is the device responsable for collecting data from the enviroment and
+                publishing its data
+                to the server.
+            </p>
+        </div>
+    </div>
     <footer>Developed by Almir Neto &copy;</footer>
 </body>
 

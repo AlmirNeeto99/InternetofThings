@@ -20,23 +20,42 @@ def handle_request(broker):
                         line = f.readline()     
                     self.wfile.write(bytes(response, 'utf-8'))
             elif self.path == '/sensor':
-                length = int(self.headers['Content-Length'])
-                request_data = self.rfile.read(length)
-                request_data = request_data.decode('utf-8')
-                json_data = json.loads(request_data)
-                print(json_data)
                 self.send_response(200)
-                data = broker.get_subscribers()[json_data['topic']]
-                print(data)
-                self.wfile.write(bytes(str(data), 'utf-8'))
+                self.send_header('Content-Type', 'text/html; charset=UTF-8')            
+                self.end_headers()
+                if len(broker.get_publishers()) == 0:
+                    self.wfile.write(bytes('No sensors found', 'utf-8'))
+                else:
+                    for p in broker.get_publishers():
+                        print(p)
+                        self.wfile.write(bytes(p['token'] + '\n', 'utf-8'))
+            elif self.path == '/actuator':
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=UTF-8')            
+                self.end_headers()
+                if len(broker.get_subscribers()) == 0:
+                    self.wfile.write(bytes('No sensors found', 'utf-8'))
+                else:
+                    for g in broker.get_subscribers():
+                        self.wfile.write(bytes(g['token'] + '\n', 'utf-8'))
             else:
-                self.send_response(200)
-                self.send_header('Content-Type', 'image/png')
+                self.send_response(404)
+                self.end_headers()
+                return
+                self.send_response(200)                
                 self.send_header('Accept-Ranges', 'bytes')
                 self.send_header('Content-Length', os.path.getsize('public_html'+self.path))
+                f = open('public_html'+self.path, 'rb')
+                name = os.path.relpath('public_html'+self.path)
+                if name.endswith('.svg'):
+                    self.send_header('Content-Type', 'image/svg+xml')
+                else:
+                    self.send_header('Content-Type', 'image/png')
                 self.end_headers()
-                with open('public_html'+self.path, 'rb') as f:
-                    self.wfile.write(f.read())
+                line = f.read()
+                while line:                    
+                    self.wfile.write(line)
+                    line = f.read()
 
         def do_POST(self):
             split_path = self.path.split('/')
