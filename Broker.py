@@ -6,8 +6,8 @@ class Broker():
     id = 1  # auxiliar variable just to track created clients
 
     def __init__(self):
-        self.subscribers = list()
-        self.publishers = list()
+        self.subscribers = {}
+        self.publishers = {}
         self.published_messages = {}
 
     def get_subscribers(self):

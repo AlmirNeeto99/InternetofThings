@@ -8,7 +8,7 @@ def handle_request(broker):
         def do_GET(self):
             split_path = self.path.split('/')
             if self.path == '/':
-                self.send_response(200)
+                self.send_response(200) # OK
                 self.send_header('Content-Type', 'text/html; charset=UTF-8')            
                 self.end_headers()
                 response = ''
@@ -19,42 +19,65 @@ def handle_request(broker):
                         line = f.readline()     
                     self.wfile.write(bytes(response, 'utf-8'))
             elif self.path == '/sensor':
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json; charset=UTF-8')            
+                self.send_response(200) # OK
+                self.send_header('Content-Type', 'text/html; charset=UTF-8')            
                 self.end_headers()
-                if len(broker.get_publishers()) == 0:
-                    self.wfile.write(bytes('{"status": "No sensors found"}', 'utf-8'))
-                else:
-                    first = True
-                    self.wfile.write(bytes('{"sensors": [', 'utf-8'))
-                    for p in broker.get_publishers():
-                        if first:
-                          first = False
-                        else:
-                          self.wfile.write(bytes(',', 'utf-8'))
-                        self.wfile.write(bytes('{"token": "'+p['token'] + '"}', 'utf-8'))
-                    self.wfile.write(bytes(']}', 'utf-8'))
+                response = ''
+                with open('public_html/sensor.html', 'r') as f:
+                    line = f.readline()
+                    while line:
+                        response += line
+                        line = f.readline()     
+                    self.wfile.write(bytes(response, 'utf-8'))
             elif self.path == '/actuator':
-                self.send_response(200)
+                self.send_response(200) # OK
+                self.send_header('Content-Type', 'text/html; charset=UTF-8')            
+                self.end_headers()
+                response = ''
+                with open('public_html/actuator.html', 'r') as f:
+                    line = f.readline()
+                    while line:
+                        response += line
+                        line = f.readline()     
+                    self.wfile.write(bytes(response, 'utf-8'))
+            elif self.path == '/sensor/testa':
+                pub = broker.get_publishers()
+                length = int(self.headers['Content-Length'])
+                request_data = self.rfile.read(length)
+                reqs = json.loads(request_data)
+                token = reqs['token']
+                p = pub[token]
+                p['command'] = 'stop'
+            elif self.path == '/sensor/list':
+                self.send_response(200) # OK
+                self.send_header('Content-Type', 'application/json; charset=UTF-8;')            
+                self.end_headers()
+                first = True
+                self.wfile.write(bytes('[', 'utf-8'))
+                for p in broker.get_publishers():
+                    pub = broker.get_publishers()[p]
+                    if first:
+                        first = False
+                    else:
+                        self.wfile.write(bytes(',', 'utf-8'))
+                    response = '{"id": %d, "status": "%s", "topic": "%s"}' %(pub['id'], pub['status'], pub['topic'])                    
+                    self.wfile.write(bytes(response, 'utf-8'))
+                self.wfile.write(bytes(']', 'utf-8'))
+            elif self.path == '/actuator/list':
+                self.send_response(200) # OK
                 self.send_header('Content-Type', 'application/json; charset=UTF-8')            
                 self.end_headers()
-                if len(broker.get_subscribers()) == 0:
-                    self.wfile.write(bytes('{"status": "No sensors found"}', 'utf-8'))
-                else:
-                    first = True
-                    self.wfile.write(bytes('{"actuators": [', 'utf-8'))
-                    for g in broker.get_subscribers():
-                        if first:
-                          first = False
-                        else:
-                          self.wfile.write(bytes(',', 'utf-8'))
-                        self.wfile.write(bytes('{"token": "' + g['token'] + '"}', 'utf-8'))
-                    self.wfile.write(bytes(']}', 'utf-8'))
+                first = True
+                self.wfile.write(bytes('[', 'utf-8'))
+                for g in broker.get_subscribers():
+                    if first:
+                        first = False
+                    else:
+                        self.wfile.write(bytes(',', 'utf-8'))
+                    self.wfile.write(bytes('{"token": "' + g['token'] + '"}', 'utf-8'))
+                self.wfile.write(bytes(']', 'utf-8'))
             else:
-                #self.send_response(404)
-                #self.end_headers()
-                #return
-                self.send_response(200)                
+                self.send_response(200) # OK           
                 self.send_header('Accept-Ranges', 'bytes')
                 self.send_header('Content-Length', os.path.getsize('public_html'+self.path))
                 f = open('public_html'+self.path, 'rb')

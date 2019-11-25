@@ -1,5 +1,6 @@
 
 import json
+from datetime import datetime
 
 def handle_sensor_request(req, broker):
     split_path = req.path.split('/')    
@@ -8,56 +9,64 @@ def handle_sensor_request(req, broker):
     request_data = request_data.decode('utf-8')
     json_data = json.loads(request_data)
     if split_path[2] == 'subscribe':
-        print('Trying to subscribe a sensor...')
         __subscribe(req, broker, json_data)
     elif split_path[2] == 'publish':
-        print('A sensor is trying to publish...')
         __publish(req,json_data,broker)
+    elif split_path[3] == 'status':
+        __status(req, json_data, broker)
     else:
-        req.send_response(400)
+        req.send_response(400) #Bad request
 
 def __subscribe(req, broker, json_data):
     pubs = broker.get_publishers()
     token = req.generate_token()
-    created = False
-    for p in pubs:
-        if token == p['token']: # if a publisher with generated token doesnt exists, create one
-            continue
-        new_pub = {'token': token, 'id': broker.id, 'topic': json_data['topic']}
-        broker.id += 1
-        pubs.append(new_pub)
-        created = True
-    if not created:        
-        exists = True
-        while exists:
+    try:
+        p = pubs[token]
+        while True:
             token = req.generate_token()
-            if len(pubs) == 0:
-                new_pub = {'token': token, 'id': broker.id, 'topic': json_data['topic']}
+            try:
+                p = pubs[token]
+            except Exception as e:
+                pubs[token] = {'topic': json_data['topic'], 'id': broker.id, 'status': 'stopped', 'timestamp': datetime.now(), 'command': 'none'}
                 broker.id += 1
-                exists = False
-            for p in pubs:
-                if token not in p['token']:        
-                    new_pub = {'token': token, 'id': broker.id, 'topic': json_data['topic']}
-                    broker.id += 1
-                    exists = False
-                    break            
-        pubs.append(new_pub)
-    print(pubs)        
-    req.send_response(201)
-    print(f'Sensor with token {token} subscribed...')
-    req.wfile.write(bytes(token, 'utf-8'))
+                break
+    except Exception as e:
+        pubs[token] = {'topic': json_data['topic'], 'id': broker.id, 'status': 'stopped', 'timestamp': datetime.now(), 'command': 'none'}
+        broker.id += 1
+    req.send_response(201) #Created
+    response = '{"token": "%s"}' %(token)
+    req.wfile.write(bytes(response, 'utf-8'))
 
-def __publish(req, json_data ,broker):    
-    for p in broker.get_publishers():
-        if json_data['token'] == p['token']:
-            if json_data['topic'] == p['topic']:                
-                broker.published_messages[json_data['topic']] = json_data['message']
-                print('Sensor published on topic', json_data['topic'] ,'successfully...')
-                req.send_response(202)
-                return
+def __publish(req, json_data ,broker):
+    try:
+        p = broker.get_publishers()[json_data['token']]
+        if json_data['topic'] == p['topic']:            
+            p['timestamp'] = datetime.now()
+            if json_data['message'] == "{stop}":
+                p['status'] = 'stopped'
+                response = '{"command": "stopped"}'
+                req.wfile.write(bytes(response, 'utf-8'))
             else:
-                print('Sensor doe\'nt belog to topic', json_data['topic'] ,'...')
-                req.send_response(403)
-                return
-    print('Sensor with this token it\'s not subscribed...')
-    req.send_response(401)
+                response = '{"command": "%s"}' %(p['command'])
+                req.wfile.write(bytes(response, 'utf-8'))
+                p['command'] == 'none'
+                p['status'] = 'sending'
+                broker.published_messages[json_data['topic']] = json_data['message']
+            req.send_response(202) #Accepted
+            return
+        else:
+            print('Sensor doe\'nt belog to topic', json_data['topic'] ,'...')
+            req.send_response(403) #Forbidden
+            return
+    except Exception as e:                          
+        print('Sensor with this token it\'s not subscribed...')
+        req.send_response(401) #Unauthorized 
+def __status(req, json_data, broker):
+    try:
+        p = broker.get_publishers()[json_data['token']]
+        response = '{"status": "%s"}' %(p['status'])
+        req.wfile.write(bytes(response, 'utf-8'))
+        req.send_response(200)
+    except Exception as e:
+        print('Sensor with this token it\'s not subscribed...')
+        req.send_response(401) #Unauthorized 

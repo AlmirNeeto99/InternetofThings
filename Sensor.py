@@ -62,8 +62,26 @@ def publishing(sleep_time, starting_value, sensor):
     global stop
     stop = False
     while not stop:
-        sensor.publish({'message': random.randint(20, 40)})
-        time.sleep(sleep_time)
+        try:
+            command = sensor.publish({'message': random.randint(20, 40)})
+            if command == 'stop':
+                while True:
+                    time.sleep(10)
+                    status = sensor.get_status()
+                    if status != 'stop':
+                        break
+            time.sleep(sleep_time)
+        except Exception as e:
+            print('Communication with server failed, trying again in 10 seconds...')
+            time.sleep(10)
+    while True:           
+        try:
+            teste = sensor.publish({"message": "{stop}"})
+            break
+        except Exception as ex:
+            print(ex)
+            print('Communication with server failed, trying again in 10 seconds...')
+            time.sleep(10)              
 
 def stop_publishing(args, window):
     args['info']['fg'] = 'red'

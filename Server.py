@@ -9,10 +9,9 @@ class Rest:
     
     def start(self):
         request_handler = handler.handle_request(self.broker)
-        httpd = HTTPServer(('172.16.103.10', 8000), request_handler)
+        httpd = HTTPServer(('localhost', 8000), request_handler)
         print('-> Server listening to localhost:8000')
         httpd.serve_forever()
-
 
 def main():
     server = Rest()

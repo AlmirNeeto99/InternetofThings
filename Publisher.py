@@ -18,7 +18,9 @@ class Publisher(Client):
                                               data=data, content_type='application/json'), 'utf-8'))
         response = self.client.recv(1024)
         response = response.decode('utf-8')
-        self.token = response
+        response = json.loads(response)
+        self.token = response['token']
+        print(self.token)
         self.client.close()
 
     def publish(self, sent_data):
@@ -28,4 +30,22 @@ class Publisher(Client):
         data = json.dumps(sent_data)
         self.client.send(bytes(format_request(method='POST', path='/sensor/publish',
                                               data=data, content_type='application/json'), 'utf-8'))
+        response = self.client.recv(1024)
+        response = response.decode('utf-8')
+        response = json.loads(response)
+        command = response['command']
         self.client.close()
+        return command
+
+    def get_status(self):
+        self.connect(self.host, self.port)
+        send = {"token": self.token}
+        send = json.dumps(send)
+        self.client.send(bytes(format_request(method='GET', path='/sensor/state',
+                                              data=send, content_type='application/json'), 'utf-8'))
+        response = self.client.recv(1024)
+        response = response.decode('utf-8')
+        response = json.loads(response)
+        status = response['status']
+        self.client.close()
+        return status
