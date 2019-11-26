@@ -12,8 +12,8 @@ def handle_sensor_request(req, broker):
         __subscribe(req, broker, json_data)
     elif split_path[2] == 'publish':
         __publish(req,json_data,broker)
-    elif split_path[3] == 'status':
-        __status(req, json_data, broker)
+    elif split_path[2] == 'config':
+        __config(req, json_data, broker)
     else:
         req.send_response(400) #Bad request
 
@@ -44,29 +44,32 @@ def __publish(req, json_data ,broker):
             p['timestamp'] = datetime.now()
             if json_data['message'] == "{stop}":
                 p['status'] = 'stopped'
-                response = '{"command": "stopped"}'
+                response = '{"command": "stop"}'
                 req.wfile.write(bytes(response, 'utf-8'))
             else:
                 response = '{"command": "%s"}' %(p['command'])
                 req.wfile.write(bytes(response, 'utf-8'))
-                p['command'] == 'none'
+                p['command'] == 'start'
                 p['status'] = 'sending'
                 broker.published_messages[json_data['topic']] = json_data['message']
             req.send_response(202) #Accepted
             return
         else:
-            print('Sensor doe\'nt belog to topic', json_data['topic'] ,'...')
             req.send_response(403) #Forbidden
             return
     except Exception as e:                          
-        print('Sensor with this token it\'s not subscribed...')
-        req.send_response(401) #Unauthorized 
-def __status(req, json_data, broker):
+        req.send_response(401) #Unauthorized
+
+def __config(req, json_data, broker):
+    action = json_data['action']
     try:
-        p = broker.get_publishers()[json_data['token']]
-        response = '{"status": "%s"}' %(p['status'])
-        req.wfile.write(bytes(response, 'utf-8'))
         req.send_response(200)
+        p = broker.get_publishers()[json_data['token']]
+        p['command'] = action
+        req.send_header('Content-Type', 'application/json; charset=UTF-8')            
+        req.end_headers()
+        req.wfile.write(bytes('{"status": "success"}', 'utf-8'))
+        
     except Exception as e:
-        print('Sensor with this token it\'s not subscribed...')
         req.send_response(401) #Unauthorized 
+        req.wfile.write(bytes('{"status": "error"}', 'utf-8'))

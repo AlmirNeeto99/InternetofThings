@@ -54,44 +54,35 @@ def verify(args, window):
     global sensor
     args['info']['fg'] = 'green'
     args['info']['text'] = 'Sensor is publishing...'
-    threading.Thread(target=publishing, args=(time, initial, sensor)).start()
+    threading.Thread(target=publishing, args=(time, initial, sensor, args)).start()
 
-def publishing(sleep_time, starting_value, sensor):
+def publishing(sleep_time, starting_value, sensor, args):
     sensor.publish({'message': starting_value})
     time.sleep(sleep_time)
     global stop
     stop = False
-    while not stop:
-        try:
+    while True:
+        if not stop:
             command = sensor.publish({'message': random.randint(20, 40)})
             if command == 'stop':
-                while True:
-                    time.sleep(10)
-                    status = sensor.get_status()
-                    if status != 'stop':
-                        break
-            time.sleep(sleep_time)
-        except Exception as e:
-            print('Communication with server failed, trying again in 10 seconds...')
-            time.sleep(10)
-    while True:           
-        try:
-            teste = sensor.publish({"message": "{stop}"})
-            break
-        except Exception as ex:
-            print(ex)
-            print('Communication with server failed, trying again in 10 seconds...')
-            time.sleep(10)              
+                stop = True
+                args['info']['fg'] = 'red'
+                args['info']['text'] = 'Stopping sensor from publishing...'
+                args['info']['fg'] = 'green'
+                args['info']['text'] = 'Stopped'
+                args['stop']['state'] = 'disabled'
+                args['start']['state'] = 'normal'
+        else:
+            status = sensor.get_status()
+            if status != 'stop':
+                stop = False
+        time.sleep(sleep_time)             
 
 def stop_publishing(args, window):
     args['info']['fg'] = 'red'
     args['info']['text'] = 'Stopping sensor from publishing...'
     global stop
     stop = True
-    while len(threading.enumerate()) > 1:
-        for t in threading.enumerate():
-            if t.name != 'MainThread':
-                t.join(0.1)
 
     args['info']['fg'] = 'green'
     args['info']['text'] = 'Stopped'

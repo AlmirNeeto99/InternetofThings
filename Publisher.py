@@ -46,6 +46,6 @@ class Publisher(Client):
         response = self.client.recv(1024)
         response = response.decode('utf-8')
         response = json.loads(response)
-        status = response['status']
+        status = response['command']
         self.client.close()
         return status

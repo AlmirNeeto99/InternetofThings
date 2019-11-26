@@ -29,3 +29,16 @@ class Subscriber(Client):
         response = self.client.recv(1024)
         self.client.close()
         return response
+
+    def get_status(self):
+        self.connect(self.host, self.port)
+        send = {"token": self.token}
+        send = json.dumps(send)
+        self.client.send(bytes(format_request(method='GET', path='/actuator/state',
+                                              data=send, content_type='application/json'), 'utf-8'))
+        response = self.client.recv(1024)
+        response = response.decode('utf-8')
+        response = json.loads(response)
+        status = response['command']
+        self.client.close()
+        return status

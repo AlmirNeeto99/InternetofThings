@@ -81,6 +81,16 @@
         background-repeat: no-repeat;
         background-size: 30px;
     }
+    .icon:hover{
+        cursor: pointer;
+    }
+    .icon.disabled{
+        position: relative;
+        z-index: -50;
+        opacity: .5;
+    }
+
+
 
     .play {
         background-image: url(img/play.svg);
@@ -140,10 +150,18 @@
                             html += '<div class="status success"></div>';
                         }
                         html += '</td>' +
-                            '<td>' + data[i].id + '</td>' +
+                        '<td>' + data[i].id + '</td>' +
                             '<td>' + data[i].topic + '</td>' +
-                            '<td class="icon play"></td>' +
-                            '<td class="icon pause"></td>' +
+                            '<td class="icon play '; 
+                            if(data[i].status != 'stopped'){
+                                html += 'disabled';
+                            }
+                            html+= '" onclick="play_sensor(\''+data[i].token+'\')"></td>' +
+                            '<td class="icon pause '; 
+                            if(data[i].status == 'stopped'){
+                                html += 'disabled';
+                            }
+                            html += '" onclick="pause_sensor(\''+data[i].token+'\')"></td>' +
                             '</tr>';
                     }
                 }
@@ -156,6 +174,25 @@
         };
         xhttp.open("GET", "/sensor/list", true);
         xhttp.send();
+    }
+
+    function play_sensor(token){
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+            }
+        };
+        xhttp.open("POST", "/sensor/config", true);
+        xhttp.send(JSON.stringify({ "action": "sending", "token": token}));
+    }
+    function pause_sensor(token){
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {                
+            }
+        };
+        xhttp.open("POST", "/sensor/config", true);
+        xhttp.send(JSON.stringify({ "action": "stop", "token": token}));
     }
 </script>
 

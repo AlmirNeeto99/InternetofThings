@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <link rel="icon" href="img/iot.png" type="image/png">
+    <title>IoT - Actuators</title>
 </head>
 <style>
     * {
@@ -21,8 +23,157 @@
     footer {
         text-align: center;
     }
+
+    header {
+        margin-top: 10px;
+    }
+
+    footer {
+        margin-bottom: 10px;
+    }
+
+    main {
+        width: 100vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        max-width: 100%;
+        height: 100vh;
+    }
+
+    table {
+        width: 100%;
+    }
+
+    td {
+        text-align: center;
+        vertical-align: middle;
+        background-color: #56505030;
+        height: 50px;
+        border-radius: 2px;
+    }
+
+    th {
+        background-color: #a5a0a0;
+        border-radius: 3px;
+    }
+
+    .status {
+        height: 20px;
+        width: 20px;
+        border-radius: 10px;
+        margin: auto;
+        border: 1px solid black;
+        box-shadow: 1px 1px 10px black;
+    }
+
+    .error {
+        background: linear-gradient(45deg, #ff3d3d 55%, white);
+    }
+
+    .success {
+        background: linear-gradient(45deg, #3bce74 55%, white);
+    }
+
+    .icon {
+        background-position-x: center;
+        background-position-y: center;
+        background-repeat: no-repeat;
+        background-size: 30px;
+    }
+
+    .icon.disabled{
+        position: relative;
+        z-index: -50;
+    }
+
+    .icon:hover{
+        cursor: pointer;
+    }
+
+    .play {
+        background-image: url(img/play.svg);
+
+    }
+
+    .pause {
+        background-image: url(img/pause.svg);
+
+    }
 </style>
+
 <body>
-    
+    <header>
+        Internet of Things - Actuators
+    </header>
+    <main>
+        <table>
+            <thead>
+                <th>Status</th>
+                <th>Id</th>
+                <th>Topic</th>
+                <th>Start</th>
+                <th>Stop</th>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot>
+                <th>Status</th>
+                <th>Id</th>
+                <th>Topic</th>
+                <th>Start</th>
+                <th>Stop</th>
+            </tfoot>
+        </table>
+    </main>
+    <footer>Developed by Almir Neto &copy;</footer>
+
 </body>
+<script>
+    window.onload = function () {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                let data = JSON.parse(xhttp.responseText);
+                let html = '';
+                let tbody = document.getElementsByTagName('tbody')[0];
+
+                if (data.length != 0) {
+                    console.log(data);
+                    for (let i = 0; i < data.length; i++) {
+                        html += '<tr><td>';
+                        if (data[i].status == 'stopped') {
+                            html += '<div class="status error"></div>';
+                        }
+                        else {
+                            html += '<div class="status success"></div>';
+                        }
+                        html += '</td>' +
+                            '<td>' + data[i].id + '</td>' +
+                            '<td>' + data[i].topic + '</td>' +
+                            '<td class="icon play '; 
+                            if(data[i].status != 'stopped'){
+                                html += 'disabled';
+                            }
+                            html+= '" onclick="play_sensor('+data[i].token+')"></td>' +
+                            '<td class="icon pause '; 
+                            if(data[i].status == 'stopped'){
+                                html += 'disabled';
+                            }
+                            html += '" onclick="pause_sensor('+data[i].token+')"></td>' +
+                            '</tr>';
+                    }
+                }
+                else {
+                    html = 'No actuators found.';
+                }
+                console.log(html);
+                tbody.innerHTML = html;
+            }
+        };
+        xhttp.open("GET", "/actuator/list", true);
+        xhttp.send();
+    }
+</script>
+
 </html>

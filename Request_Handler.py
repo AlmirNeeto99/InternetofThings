@@ -40,14 +40,6 @@ def handle_request(broker):
                         response += line
                         line = f.readline()     
                     self.wfile.write(bytes(response, 'utf-8'))
-            elif self.path == '/sensor/testa':
-                pub = broker.get_publishers()
-                length = int(self.headers['Content-Length'])
-                request_data = self.rfile.read(length)
-                reqs = json.loads(request_data)
-                token = reqs['token']
-                p = pub[token]
-                p['command'] = 'stop'
             elif self.path == '/sensor/list':
                 self.send_response(200) # OK
                 self.send_header('Content-Type', 'application/json; charset=UTF-8;')            
@@ -60,7 +52,7 @@ def handle_request(broker):
                         first = False
                     else:
                         self.wfile.write(bytes(',', 'utf-8'))
-                    response = '{"id": %d, "status": "%s", "topic": "%s"}' %(pub['id'], pub['status'], pub['topic'])                    
+                    response = '{"id": %d, "status": "%s", "topic": "%s", "token": "%s"}' %(pub['id'], pub['status'], pub['topic'], p)                    
                     self.wfile.write(bytes(response, 'utf-8'))
                 self.wfile.write(bytes(']', 'utf-8'))
             elif self.path == '/actuator/list':
@@ -76,6 +68,21 @@ def handle_request(broker):
                         self.wfile.write(bytes(',', 'utf-8'))
                     self.wfile.write(bytes('{"token": "' + g['token'] + '"}', 'utf-8'))
                 self.wfile.write(bytes(']', 'utf-8'))
+            elif self.path == '/sensor/state':
+                length = int(self.headers['Content-Length'])
+                request_data = self.rfile.read(length)
+                request_data = request_data.decode('utf-8')
+                json_data = json.loads(request_data)
+                try:
+                    p = broker.get_publishers()[json_data['token']]
+                    response = '{"command": "%s"}' %(p['command'])
+                    print(response)
+                    self.wfile.write(bytes(response, 'utf-8'))
+                    self.send_header('Content-Type', 'application/json; charset=UTF-8')            
+                    self.end_headers()
+                    self.send_response(200)
+                except Exception as e:
+                    self.send_response(401) #Unauthorized
             else:
                 self.send_response(200) # OK           
                 self.send_header('Accept-Ranges', 'bytes')
