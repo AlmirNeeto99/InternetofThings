@@ -1,5 +1,5 @@
 from Subscriber import Subscriber
-import time, threading
+import time, threading, json
 import tkinter as tk
 
 stop = False
@@ -48,27 +48,69 @@ def verify(args, window):
     global actuator
     args['info']['fg'] = 'green'
     args['info']['text'] = 'Actuator is reading messages...'
-    threading.Thread(target=reading, args=(time, actuator)).start()
+    threading.Thread(target=reading, args=(time, actuator, args)).start()
 
-def reading(sleep_time, actuator):
-    receive = actuator.receive()
+def reading(sleep_time, actuator, args):
+    """If the server is unreachable, try to connect again and again..."""
+    while True:               
+        try:
+            status = actuator.start_receiving()
+            message = actuator.receive()
+            break # If the actuator reads the first message successfully, stop the loop...
+        except Exception as e:
+            time.sleep(sleep_time)
+            continue
     time.sleep(sleep_time)
     global stop
     stop = False
-    while not stop:
-        receive = actuator.receive()
-        print(receive)
-        time.sleep(sleep_time)
-
+    while True:
+        # If the actuator is not stopped, read data every time, based on time typed on GUI...
+        if not stop:
+            try:
+                command = actuator.receive()
+                data = json.loads(command)
+                command = data['command']
+            except Exception as e:
+                time.sleep(sleep_time) 
+                continue
+            if command == 'stop':
+                stop = True
+                args['info']['fg'] = 'red'
+                args['info']['text'] = 'Stopping actuator from reading...'
+                args['info']['fg'] = 'green'
+                args['info']['text'] = 'Stopped'
+                args['stop']['state'] = 'disabled'
+                args['start']['state'] = 'normal'
+        # If the actuator is stopped, ask the server if someone make him start again...
+        # Or if someone press 'receive' button on GUI.
+        else:
+            try:
+                status = actuator.get_status()
+            except Exception as e:
+                time.sleep(sleep_time) 
+                continue            
+            if status != 'stop':
+                stop = False
+                args['info']['fg'] = 'green'
+                args['info']['text'] = 'Actuator is reading...'
+                args['stop']['state'] = 'normal'
+                args['start']['state'] = 'disabled'
+        time.sleep(sleep_time) 
 def stop_reading(args, window):
+    global actuator
     args['info']['fg'] = 'red'
     args['info']['text'] = 'Stopping actuator from receiving...'
     global stop
     stop = True
-    while len(threading.enumerate()) > 1:
-        for t in threading.enumerate():
-            if t.name != 'MainThread':
-                t.join(0.1)
+    """ Try to stop reading from server... If server is unreachable, try again, till it connects """
+    #Tell the server, this sensor will stop sending data.
+    while True:
+        try:
+            status = actuator.stop_receiving()
+            break
+        except Exception as e:
+            time.sleep(5) 
+            continue
 
     args['info']['fg'] = 'green'
     args['info']['text'] = 'Stopped'
@@ -81,7 +123,7 @@ class Actuator_Application(tk.Tk):
 
         tk.Tk.wm_title(self, 'Internet of Things - Actuator')
         tk.Tk.geometry(self, '500x350')
-        tk.Tk.iconbitmap(self,default='actuator.ico') 
+        #tk.Tk.iconbitmap(self,default='actuator.ico') 
         tk.Tk.resizable(self, False, False)
         container = tk.Frame(self)        
 

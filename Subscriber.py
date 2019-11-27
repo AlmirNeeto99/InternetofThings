@@ -16,7 +16,8 @@ class Subscriber(Client):
         self.client.send(bytes(format_request(method='POST', path='/actuator/subscribe', data=data, content_type='application/json'), 'utf-8'))
         response = self.client.recv(1024)
         response = response.decode('utf-8')
-        self.token = response
+        response = json.loads(response)
+        self.token = response['token']
         self.client.close()
 
     def receive(self):
@@ -40,5 +41,31 @@ class Subscriber(Client):
         response = response.decode('utf-8')
         response = json.loads(response)
         status = response['command']
+        self.client.close()
+        return status
+    # Tells the server this subscriber will start reading messages
+    def start_receiving(self):
+        self.connect(self.host, self.port)
+        send = {"token": self.token, "action": "start"}
+        send = json.dumps(send)
+        self.client.send(bytes(format_request(method='POST', path='/actuator/config/device',
+                                              data=send, content_type='application/json'), 'utf-8'))
+        response = self.client.recv(1024)
+        response = response.decode('utf-8')
+        response = json.loads(response)
+        status = response['status']
+        self.client.close()
+        return status
+    # Tells the server this subscriber will stop reading messages
+    def stop_receiving(self):
+        self.connect(self.host, self.port)
+        send = {"token": self.token, "action": "stop"}
+        send = json.dumps(send)
+        self.client.send(bytes(format_request(method='POST', path='/actuator/config/device',
+                                              data=send, content_type='application/json'), 'utf-8'))
+        response = self.client.recv(1024)
+        response = response.decode('utf-8')
+        response = json.loads(response)
+        status = response['status']
         self.client.close()
         return status

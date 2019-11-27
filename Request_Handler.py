@@ -18,6 +18,7 @@ def handle_request(broker):
                         response += line
                         line = f.readline()     
                     self.wfile.write(bytes(response, 'utf-8'))
+                return
             elif self.path == '/sensor':
                 self.send_response(200) # OK
                 self.send_header('Content-Type', 'text/html; charset=UTF-8')            
@@ -29,6 +30,7 @@ def handle_request(broker):
                         response += line
                         line = f.readline()     
                     self.wfile.write(bytes(response, 'utf-8'))
+                return
             elif self.path == '/actuator':
                 self.send_response(200) # OK
                 self.send_header('Content-Type', 'text/html; charset=UTF-8')            
@@ -40,6 +42,7 @@ def handle_request(broker):
                         response += line
                         line = f.readline()     
                     self.wfile.write(bytes(response, 'utf-8'))
+                return
             elif self.path == '/sensor/list':
                 self.send_response(200) # OK
                 self.send_header('Content-Type', 'application/json; charset=UTF-8;')            
@@ -52,37 +55,55 @@ def handle_request(broker):
                         first = False
                     else:
                         self.wfile.write(bytes(',', 'utf-8'))
-                    response = '{"id": %d, "status": "%s", "topic": "%s", "token": "%s"}' %(pub['id'], pub['status'], pub['topic'], p)                    
+                    response = '{"id": %d, "status": "%s", "topic": "%s", "token": "%s", "data": "%s"}' %(pub['id'], pub['command'], pub['topic'], p, pub['data'])
                     self.wfile.write(bytes(response, 'utf-8'))
                 self.wfile.write(bytes(']', 'utf-8'))
+                return
+
             elif self.path == '/actuator/list':
                 self.send_response(200) # OK
-                self.send_header('Content-Type', 'application/json; charset=UTF-8')            
+                self.send_header('Content-Type', 'application/json; charset=UTF-8')
                 self.end_headers()
                 first = True
                 self.wfile.write(bytes('[', 'utf-8'))
                 for g in broker.get_subscribers():
+                    pub = broker.get_subscribers()[g]
                     if first:
                         first = False
                     else:
                         self.wfile.write(bytes(',', 'utf-8'))
-                    self.wfile.write(bytes('{"token": "' + g['token'] + '"}', 'utf-8'))
+                    response = '{"id": %d, "status": "%s", "topic": "%s", "token": "%s", "data": "%s"}' %(pub['id'], pub['command'], pub['topic'], g, pub['data'])
+                    self.wfile.write(bytes(response, 'utf-8'))
                 self.wfile.write(bytes(']', 'utf-8'))
-            elif self.path == '/sensor/state':
+                return
+            elif self.path == '/actuator/state':
                 length = int(self.headers['Content-Length'])
                 request_data = self.rfile.read(length)
                 request_data = request_data.decode('utf-8')
                 json_data = json.loads(request_data)
                 try:
-                    p = broker.get_publishers()[json_data['token']]
+                    p = broker.get_subscribers()[json_data['token']]
                     response = '{"command": "%s"}' %(p['command'])
-                    print(response)
                     self.wfile.write(bytes(response, 'utf-8'))
-                    self.send_header('Content-Type', 'application/json; charset=UTF-8')            
-                    self.end_headers()
                     self.send_response(200)
                 except Exception as e:
                     self.send_response(401) #Unauthorized
+                return
+            elif self.path == '/sensor/state':
+                length = int(self.headers['Content-Length'])
+                request_data = self.rfile.read(length)
+                request_data = request_data.decode('utf-8')
+                json_data = json.loads(request_data)
+                try:                    
+                    p = broker.get_publishers()[json_data['token']]
+                    self.send_response(200)
+                    response = '{"command": "%s"}' %(p['command'])
+                    self.wfile.write(bytes(response, 'utf-8'))
+                    #self.send_header('Content-Type', 'application/json; charset=UTF-8')            
+                    #self.end_headers()                    
+                except Exception as e:
+                    self.send_response(401) #Unauthorized
+                return
             else:
                 self.send_response(200) # OK           
                 self.send_header('Accept-Ranges', 'bytes')
@@ -98,6 +119,7 @@ def handle_request(broker):
                 while line:                    
                     self.wfile.write(line)
                     line = f.read()
+                return
 
         def do_POST(self):
             split_path = self.path.split('/')

@@ -75,6 +75,10 @@
         background: linear-gradient(45deg, #3bce74 55%, white);
     }
 
+    .unknown {
+        background: linear-gradient(45deg, #737070 55%, white);
+    }
+
     .icon {
         background-position-x: center;
         background-position-y: center;
@@ -82,12 +86,13 @@
         background-size: 30px;
     }
 
-    .icon.disabled{
+    .icon.disabled {
         position: relative;
         z-index: -50;
+        opacity: .5;
     }
 
-    .icon:hover{
+    .icon:hover {
         cursor: pointer;
     }
 
@@ -112,6 +117,7 @@
                 <th>Status</th>
                 <th>Id</th>
                 <th>Topic</th>
+                <th>Data</th>
                 <th>Start</th>
                 <th>Stop</th>
             </thead>
@@ -121,6 +127,7 @@
                 <th>Status</th>
                 <th>Id</th>
                 <th>Topic</th>
+                <th>Data</th>
                 <th>Start</th>
                 <th>Stop</th>
             </tfoot>
@@ -130,7 +137,7 @@
 
 </body>
 <script>
-    window.onload = function () {
+    function load_actuators() {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState == 4 && this.status == 200) {
@@ -142,37 +149,71 @@
                     console.log(data);
                     for (let i = 0; i < data.length; i++) {
                         html += '<tr><td>';
-                        if (data[i].status == 'stopped') {
+                        if (data[i].status == 'stop') {
                             html += '<div class="status error"></div>';
                         }
-                        else {
+                        else if (data[i].status == 'start') {
                             html += '<div class="status success"></div>';
+                        }
+                        else {
+                            html += '<div class="status unknown"></div>';
                         }
                         html += '</td>' +
                             '<td>' + data[i].id + '</td>' +
                             '<td>' + data[i].topic + '</td>' +
-                            '<td class="icon play '; 
-                            if(data[i].status != 'stopped'){
-                                html += 'disabled';
-                            }
-                            html+= '" onclick="play_sensor('+data[i].token+')"></td>' +
-                            '<td class="icon pause '; 
-                            if(data[i].status == 'stopped'){
-                                html += 'disabled';
-                            }
-                            html += '" onclick="pause_sensor('+data[i].token+')"></td>' +
-                            '</tr>';
+                            '<td>' + data[i].data + '</td>';
+
+                        if (data[i].status == 'start') {
+                            html += '<td class="icon play disabled" onclick="play_actuator(\'' + data[i].token + '\')"></td>';
+                            html += '<td class="icon pause" onclick="pause_actuator(\'' + data[i].token + '\')"></td>';
+                        }
+                        else if (data[i].status == 'stop') {
+                            html += '<td class="icon play" onclick="play_actuator(\'' + data[i].token + '\')"></td>';
+                            html += '<td class="icon pause disabled" onclick="pause_actuator(\'' + data[i].token + '\')"></td>';
+                        }
+                        else {
+                            html += '<td class="icon play disabled" onclick="play_actuator(\'' + data[i].token + '\')"></td>';
+                            html += '<td class="icon pause disabled" onclick="pause_actuator(\'' + data[i].token + '\')"></td>';
+                        }
+                        html += '</tr>';
                     }
                 }
                 else {
                     html = 'No actuators found.';
                 }
-                console.log(html);
                 tbody.innerHTML = html;
             }
         };
         xhttp.open("GET", "/actuator/list", true);
         xhttp.send();
+
+    }
+    window.onload = function () {
+        load_actuators();
+        setInterval(function () {
+            load_actuators();
+        }, 500);
+    }
+
+    function play_actuator(token) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                //location.reload();
+            }
+        };
+        xhttp.open("POST", "/actuator/config/app", true);
+        xhttp.send(JSON.stringify({ "action": "start", "token": token }));
+    }
+    function pause_actuator(token) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                //location.reload();
+            }
+        };
+        xhttp.open("POST", "/actuator/config/app", true);
+        xhttp.send(JSON.stringify({ "action": "stop", "token": token }));
     }
 </script>
 

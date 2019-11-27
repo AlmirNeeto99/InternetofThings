@@ -57,13 +57,26 @@ def verify(args, window):
     threading.Thread(target=publishing, args=(time, initial, sensor, args)).start()
 
 def publishing(sleep_time, starting_value, sensor, args):
-    sensor.publish({'message': starting_value})
+    """If the server is unreachable, try to connect again and again..."""
+    while True:               
+        try:
+            status = sensor.start_sending()
+            sensor.publish({'message': starting_value})
+            break # If the sensor publish the first message successfully, stop the loop...
+        except Exception as e:
+            time.sleep(sleep_time)
+            continue
     time.sleep(sleep_time)
     global stop
     stop = False
     while True:
+        # If the sensor is not stopped, send data every time, based on time typed on GUI...
         if not stop:
-            command = sensor.publish({'message': random.randint(20, 40)})
+            try:
+                command = sensor.publish({'message': random.randint(20, 40)})
+            except Exception as e:
+                time.sleep(sleep_time) 
+                continue
             if command == 'stop':
                 stop = True
                 args['info']['fg'] = 'red'
@@ -72,15 +85,35 @@ def publishing(sleep_time, starting_value, sensor, args):
                 args['info']['text'] = 'Stopped'
                 args['stop']['state'] = 'disabled'
                 args['start']['state'] = 'normal'
+        # If the sensor is stopped, ask the server if someone make him start again...
+        # Or if someone press 'publish' button on GUI.
         else:
-            status = sensor.get_status()
+            try:
+                status = sensor.get_status()
+            except Exception as e:
+                time.sleep(sleep_time) 
+                continue            
             if status != 'stop':
                 stop = False
-        time.sleep(sleep_time)             
+                args['info']['fg'] = 'green'
+                args['info']['text'] = 'Sensor is publishing...'
+                args['stop']['state'] = 'normal'
+                args['start']['state'] = 'disabled'
+        time.sleep(sleep_time) 
 
 def stop_publishing(args, window):
+    global sensor
     args['info']['fg'] = 'red'
     args['info']['text'] = 'Stopping sensor from publishing...'
+    """ Try to stop sending to server... If server is unreachable, try again, till it connects """
+    #Tell the server, this sensor will stop sending data.
+    while True:
+        try:
+            status = sensor.stop_sending()
+            break
+        except Exception as e:
+            time.sleep(5) 
+            continue    
     global stop
     stop = True
 
@@ -99,9 +132,9 @@ class Sensor_Application(tk.Tk):
 
         tk.Tk.wm_title(self, 'Internet of Things - Sensor')
         tk.Tk.geometry(self, '500x350')
-        tk.Tk.iconbitmap(self,default='sensor.ico') 
+        #tk.Tk.iconbitmap(self,default='sensor.ico') 
         tk.Tk.resizable(self, False, False)
-        container = tk.Frame(self)        
+        container = tk.Frame(self)
 
         container.pack(side="top", fill="both", expand = True)
 
@@ -126,6 +159,7 @@ class Sensor_Application(tk.Tk):
 
 class first_screen(tk.Frame):
     def __init__(self, parent, controller):
+        """ Add labels and inputs to the GUI. """
         tk.Frame.__init__(self,parent)
         host = tk.Label(self, text="Host", width=10)
         host_txt = tk.Entry(self,width=10)
@@ -149,7 +183,7 @@ class first_screen(tk.Frame):
         error = tk.Label(self, text="", fg="red")
         error.place(height=20, x=200, y=300)
         
-        
+        """ Add buttons and their callbacks """
         start = tk.Button(self, text="Subscribe and Connect")
         data = {'topic': topic_txt, 'port': port_txt, 'host': host_txt, 'error': error, 'button': start}
         start['command'] = lambda: connect_server(data, controller)
@@ -158,6 +192,7 @@ class first_screen(tk.Frame):
 class second_screen(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self,parent)
+        """ Add labels and inputs to the GUI. """
         self.sensor = ""
         subscribed_topic_label = tk.Label(self, text="Subscribed Topic: ", width=30)
         self.subscribed_topic = tk.Label(self,width=10, text='')
@@ -186,6 +221,7 @@ class second_screen(tk.Frame):
         info = tk.Label(self, text="", fg="red")
         info.place(height=20, x=200, y=300)
 
+        """ Add buttons and their callbacks """
         data = {'stop': stop, 'start': start, 'time': time_value, 'initial': initial_value,'info': info}
         start['command'] = lambda: verify(data, controller)
         stop['command'] = lambda: stop_publishing(data, controller)
