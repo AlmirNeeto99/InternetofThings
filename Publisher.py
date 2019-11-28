@@ -18,7 +18,7 @@ class Publisher(Client):
         response = self.client.recv(1024)
         response = response.decode('utf-8')
         response = json.loads(response)
-        self.token = response['token']
+        self.token = response['token'] # save the token returned by server
         self.client.close()
     # Send a message to the server...
     def publish(self, sent_data):

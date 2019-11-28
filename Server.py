@@ -5,7 +5,7 @@ from Broker import Broker
     
 class Rest:
     def __init__(self):
-        self.broker = Broker()
+        self.broker = Broker() # Create a broker
     
     def start(self):
         request_handler = handler.handle_request(self.broker)

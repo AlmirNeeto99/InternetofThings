@@ -2,10 +2,11 @@ from Subscriber import Subscriber
 import time, threading, json
 import tkinter as tk
 
-stop = False
-actuator = None
+stop = False # global variable to save actuator state...
+actuator = None # global variable to keep actuator instance
 
 def connect_server(args, window):
+    # Check if every data typed by user is correct... 
     try:
         port = int(args['port'].get())
     except Exception:
@@ -22,9 +23,12 @@ def connect_server(args, window):
     args['error']['fg'] = 'green'
     args['error']['text'] = 'Trying to connect to server...'
     global actuator
+    # Create an actuator
     actuator = Actuator(topic, host, port)
     try:
         args['button']['state'] = 'disabled'
+        # Try to connect to server...
+        # If succeed, subscribe actuator to the topic
         actuator.connect(host, port)
         actuator.close()        
         actuator.subscribe_subscriber()
@@ -48,6 +52,7 @@ def verify(args, window):
     global actuator
     args['info']['fg'] = 'green'
     args['info']['text'] = 'Actuator is reading messages...'
+    # Start a thread to read messages from server...
     threading.Thread(target=reading, args=(time, actuator, args)).start()
 
 def reading(sleep_time, actuator, args):

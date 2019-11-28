@@ -11,6 +11,7 @@ class Subscriber(Client):
         self.topic = topics
 
     def subscribe_subscriber(self):
+        # Subscribe an actuator to a server
         self.connect(self.host, self.port)
         data = '{"topic": "%s"}' %(self.topic)
         self.client.send(bytes(format_request(method='POST', path='/actuator/subscribe', data=data, content_type='application/json'), 'utf-8'))
@@ -19,7 +20,7 @@ class Subscriber(Client):
         response = json.loads(response)
         self.token = response['token']
         self.client.close()
-
+    # Read a message from server
     def receive(self):
         self.connect(self.host, self.port)
         sent_data = {}
@@ -30,7 +31,7 @@ class Subscriber(Client):
         response = self.client.recv(1024)
         self.client.close()
         return response
-
+    # Get the actual status of the device
     def get_status(self):
         self.connect(self.host, self.port)
         send = {"token": self.token}

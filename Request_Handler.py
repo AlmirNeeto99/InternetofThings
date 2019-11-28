@@ -7,6 +7,7 @@ def handle_request(broker):
     class Request_Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             split_path = self.path.split('/')
+            # return the first page of application...
             if self.path == '/':
                 self.send_response(200) # OK
                 self.send_header('Content-Type', 'text/html; charset=UTF-8')            
@@ -20,10 +21,12 @@ def handle_request(broker):
                     self.wfile.write(bytes(response, 'utf-8'))
                 return
             elif self.path == '/sensor':
+                # return the page that list all sensors...
                 self.send_response(200) # OK
                 self.send_header('Content-Type', 'text/html; charset=UTF-8')            
                 self.end_headers()
                 response = ''
+                # read all lines of a html page and return it to browser...
                 with open('public_html/sensor.html', 'r') as f:
                     line = f.readline()
                     while line:
@@ -32,10 +35,12 @@ def handle_request(broker):
                     self.wfile.write(bytes(response, 'utf-8'))
                 return
             elif self.path == '/actuator':
+                # return the page that list all actuators...
                 self.send_response(200) # OK
                 self.send_header('Content-Type', 'text/html; charset=UTF-8')            
                 self.end_headers()
                 response = ''
+                # read all lines of a html page and return it to browser...
                 with open('public_html/actuator.html', 'r') as f:
                     line = f.readline()
                     while line:
@@ -44,6 +49,7 @@ def handle_request(broker):
                     self.wfile.write(bytes(response, 'utf-8'))
                 return
             elif self.path == '/sensor/list':
+                # returns all sensors formatted as a JSON array
                 self.send_response(200) # OK
                 self.send_header('Content-Type', 'application/json; charset=UTF-8;')            
                 self.end_headers()
@@ -61,6 +67,7 @@ def handle_request(broker):
                 return
 
             elif self.path == '/actuator/list':
+                # returns all actuators formatted as a JSON array
                 self.send_response(200) # OK
                 self.send_header('Content-Type', 'application/json; charset=UTF-8')
                 self.end_headers()
@@ -77,11 +84,12 @@ def handle_request(broker):
                 self.wfile.write(bytes(']', 'utf-8'))
                 return
             elif self.path == '/actuator/state':
+                # returns the actual state of an actuator
                 length = int(self.headers['Content-Length'])
                 request_data = self.rfile.read(length)
                 request_data = request_data.decode('utf-8')
                 json_data = json.loads(request_data)
-                try:
+                try:                    
                     p = broker.get_subscribers()[json_data['token']]
                     response = '{"command": "%s"}' %(p['command'])
                     self.wfile.write(bytes(response, 'utf-8'))
@@ -90,6 +98,7 @@ def handle_request(broker):
                     self.send_response(401) #Unauthorized
                 return
             elif self.path == '/sensor/state':
+                # returns the actual state of a sensor...
                 length = int(self.headers['Content-Length'])
                 request_data = self.rfile.read(length)
                 request_data = request_data.decode('utf-8')
@@ -105,6 +114,7 @@ def handle_request(broker):
                     self.send_response(401) #Unauthorized
                 return
             else:
+                # Return the other types of files that a server can serve
                 self.send_response(200) # OK           
                 self.send_header('Accept-Ranges', 'bytes')
                 self.send_header('Content-Length', os.path.getsize('public_html'+self.path))
@@ -127,7 +137,7 @@ def handle_request(broker):
                 handle_sensor_request(self, broker)
             elif split_path[1] == 'actuator':
                 handle_actuator_request(self, broker)
-
+        # genereate a token
         def generate_token(self):
             return str(secrets.token_hex(16))
     return Request_Handler
