@@ -1,7 +1,12 @@
 from Client import Client
 from HTTP_Request import format_request
 import json
-
+""" Class responsable for connecting to server and:
+* Subscribe a subscriber to a topic...
+* Tell the server this subscriber will read messages....
+* Read some data from its topic...
+* Tell the server this subscriber will stop reading messages
+ """
 class Subscriber(Client):
     def __init__(self, host, port, topics):
         super().__init__()

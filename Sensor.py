@@ -7,16 +7,16 @@ sensor = None
 
 def connect_server(args, window):
     try:
-        port = int(args['port'].get())
+        port = int(args['port'].get()) # Try yo convert the port to a number
     except Exception:
         args['error']['text'] = 'Port field must be a number...'
         return
     host = args['host'].get()
     topic = args['topic'].get()
-    if len(host.split(' ')) != 1 or len(host) == 0:
+    if len(host.split(' ')) != 1 or len(host) == 0: # Try to split the host into one single string
         args['error']['text'] = 'You must specify a host...'
         return
-    if len(topic.split(' ')) != 1 or len(topic) == 0:
+    if len(topic.split(' ')) != 1 or len(topic) == 0: # Try to split the topic into one single string
         args['error']['text'] = 'You must specify a topic to subscribe...'
         return
     args['error']['fg'] = 'green'

@@ -2,6 +2,12 @@ from Client import Client
 from HTTP_Request import format_request
 import json
 
+""" Class responsable for connecting to server and:
+* Subscribe a publisher to a topic...
+* Tell the server this publisher will send messages....
+* Publish some data into its topic...
+* Tell the server this publisher will stop sending messages
+ """
 class Publisher(Client):
     def __init__(self, topic, host, port):
         super().__init__()
@@ -34,7 +40,7 @@ class Publisher(Client):
         command = response['command']
         self.client.close()
         return command
-    # Check the server if publisher stats has changed...
+    # Check the server if publisher stats had changed...
     def get_status(self):
         self.connect(self.host, self.port)
         send = {"token": self.token}
